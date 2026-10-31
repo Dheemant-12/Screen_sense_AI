@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenSense Orb</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --orb-window-size: 96px;
+    --orb-size: 52px;
+  }
+
+  body {
+    width: var(--orb-window-size);
+    height: var(--orb-window-size);
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    -webkit-app-region: no-drag;
+  }
+
+  .orb-wrap {
+    width: var(--orb-window-size);
+    height: var(--orb-window-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+
+  /* Home button styling */
+  .home-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(30, 30, 45, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.35;
+    transform: scale(0.9);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .orb-wrap:hover .home-btn {
+    opacity: 0.75;
+    transform: scale(1);
+    background: rgba(40, 40, 60, 0.8);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .home-btn:hover {
+    opacity: 1 !important;
+    background: #7c6cfc !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.15) !important;
+    box-shadow: 0 0 12px rgba(124, 108, 252, 0.6);
+  }
+
+  .home-btn:active {
+    transform: scale(0.9) !important;
+  }
+
+  .orb {
+    width: var(--orb-size);
+    height: var(--orb-size);
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+  }
+
+  /* Default idle state */
+  .orb-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #2a2a3e, #0d0d1a);
+    border: 1px solid rgba(120, 100, 255, 0.3);
+    box-shadow:
+      0 0 20px rgba(100, 80, 255, 0.15),
+      0 4px 24px rgba(0,0,0,0.5),
+      inset 0 1px 1px rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  /* Animated shimmer ring */
+  .orb-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(120, 100, 255, 0.6) 60deg,
+      rgba(80, 200, 255, 0.4) 120deg,
+      transparent 180deg,
+      transparent 360deg
+    );
+    animation: spin 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .orb-ring::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: #0d0d1a;
+  }
+
+  /* Core glyph */
+  .orb-glyph {
+    width: 22px;
+    height: 22px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .orb-glyph svg {
+    width: 100%;
+    height: 100%;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  /* Pulse dots (shown during active session) */
+  .pulse-dots {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 7px;
+    gap: 3px;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .pulse-dots span {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #7c6cfc;
+    animation: pulse-wave 1.2s ease-in-out infinite;
+  }
+  .pulse-dots span:nth-child(2) { animation-delay: 0.15s; height: 5px; }
+  .pulse-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* States */
+  .orb-wrap:hover .orb { transform: scale(1.08); }
+  .orb-wrap:hover .orb-inner {
+    border-color: rgba(120, 100, 255, 0.6);
+    box-shadow:
+      0 0 28px rgba(100, 80, 255, 0.35),
+      0 4px 24px rgba(0,0,0,0.5),
+      inset 0 1px 1px rgba(255,255,255,0.1);
+  }
+  .orb-wrap:hover .orb-ring { opacity: 1; }
+  .orb-wrap:hover .orb-glyph svg { opacity: 1; }
+  .orb-wrap:active .orb { transform: scale(0.94); }
+
+  /* Active session state */
+  .orb-wrap.active .orb-inner {
+    background: radial-gradient(circle at 35% 35%, #1a1a3a, #080818);
+    border-color: rgba(120, 100, 255, 0.7);
+    box-shadow:
+      0 0 32px rgba(100, 80, 255, 0.4),
+      0 0 60px rgba(100, 80, 255, 0.15),
+      0 4px 24px rgba(0,0,0,0.6),
+      inset 0 1px 1px rgba(255,255,255,0.1);
+  }
+  .orb-wrap.active .orb-ring { opacity: 1; animation-duration: 2s; }
+  .orb-wrap.active .orb-glyph { opacity: 0; }
+  .orb-wrap.active .pulse-dots { opacity: 1; }
+
+  /* Mode color accents */
+  .orb-wrap.mode-captions .orb-ring {
+    background: conic-gradient(from 0deg, transparent, rgba(56, 182, 255, 0.8) 60deg, rgba(56, 182, 255, 0.3) 120deg, transparent 180deg, transparent);
+  }
+  .orb-wrap.mode-scene .orb-ring {
+    background: conic-gradient(from 0deg, transparent, rgba(255, 170, 50, 0.8) 60deg, rgba(255, 170, 50, 0.3) 120deg, transparent 180deg, transparent);
+  }
+  .orb-wrap.mode-transcript .orb-ring {
+    background: conic-gradient(from 0deg, transparent, rgba(255, 100, 100, 0.8) 60deg, rgba(255, 100, 100, 0.3) 120deg, transparent 180deg, transparent);
+  }
+  .orb-wrap.mode-summarizer .orb-ring {
+    background: conic-gradient(from 0deg, transparent, rgba(50, 220, 150, 0.8) 60deg, rgba(50, 220, 150, 0.3) 120deg, transparent 180deg, transparent);
+  }
+  .orb-wrap.mode-face-analysis .orb-ring {
+    background: conic-gradient(from 0deg, transparent, rgba(255, 100, 200, 0.8) 60deg, rgba(255, 100, 200, 0.3) 120deg, transparent 180deg, transparent);
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pulse-wave {
+    0%, 100% { transform: scaleY(1); opacity: 0.5; }
+    50% { transform: scaleY(1.8); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="orb-wrap" id="orb" title="ScreenSense AI">
+  <div class="orb">
+    <div class="orb-ring"></div>
+    <div class="orb-inner">
+      <div class="orb-glyph">
+        <!-- Eye / lens glyph -->
+        <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="11" cy="11" rx="9" ry="6" stroke="rgba(160,140,255,0.9)" stroke-width="1.2"/>
+          <circle cx="11" cy="11" r="2.8" fill="rgba(120,100,255,0.8)"/>
+          <circle cx="12.2" cy="9.8" r="0.8" fill="rgba(255,255,255,0.6)"/>
+        </svg>
+      </div>
+      <div class="pulse-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+  <div class="home-btn" id="homeBtn" title="Welcome Page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+const orb = document.getElementById('orb');
+const homeBtn = document.getElementById('homeBtn');
+let isDragging = false;
+let dragStartX, dragStartY;
+let mouseDownX, mouseDownY;
+let dragMoved = false;
+let activePointerId = null;
+let pointerOffsetX = 48;
+let pointerOffsetY = 48;
+
+orb.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#homeBtn')) {
+    return;
+  }
+  if (e.button !== 0 || isDragging) return;
+  isDragging = true;
+  dragMoved = false;
+  activePointerId = e.pointerId;
+  dragStartX = e.screenX;
+  dragStartY = e.screenY;
+  mouseDownX = e.screenX;
+  mouseDownY = e.screenY;
+  pointerOffsetX = Number.isFinite(window.screenX) ? e.screenX - window.screenX : e.clientX;
+  pointerOffsetY = Number.isFinite(window.screenY) ? e.screenY - window.screenY : e.clientY;
+  orb.setPointerCapture?.(e.pointerId);
+  e.preventDefault();
+});
+
+homeBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  window.ss.openWelcome();
+});
+
+document.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const dx = e.screenX - dragStartX;
+  const dy = e.screenY - dragStartY;
+  if (Math.abs(e.screenX - mouseDownX) > 4 || Math.abs(e.screenY - mouseDownY) > 4) {
+    dragMoved = true;
+  }
+  if (dragMoved) {
+    window.ss.orbDrag({
+      x: Math.round(e.screenX - pointerOffsetX),
+      y: Math.round(e.screenY - pointerOffsetY)
+    });
+    dragStartX = e.screenX;
+    dragStartY = e.screenY;
+  }
+});
+
+function finishDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+  activePointerId = null;
+  if (!dragMoved) {
+    window.ss.orbClick();
+    return;
+  }
+  window.ss.orbDragEnd();
+}
+
+document.addEventListener('pointerup', finishDrag);
+document.addEventListener('pointercancel', () => {
+  if (isDragging && dragMoved) window.ss.orbDragEnd();
+  isDragging = false;
+  activePointerId = null;
+});
+
+window.addEventListener('blur', () => {
+  if (isDragging && dragMoved) window.ss.orbDragEnd();
+  isDragging = false;
+  activePointerId = null;
+});
+
+// Listen for session state
+window.ss.on('session:started', (mode) => {
+  orb.classList.add('active');
+  orb.classList.remove('mode-captions', 'mode-scene', 'mode-transcript', 'mode-summarizer', 'mode-face-analysis');
+  const modeClass = {
+    'live-captions': 'mode-captions',
+    'scene-explain': 'mode-scene',
+    'transcript': 'mode-transcript',
+    'summarizer': 'mode-summarizer',
+    'face-analysis': 'mode-face-analysis'
+  }[mode];
+  if (modeClass) orb.classList.add(modeClass);
+});
+
+window.ss.on('session:stopped', () => {
+  orb.classList.remove('active', 'mode-captions', 'mode-scene', 'mode-transcript', 'mode-summarizer', 'mode-face-analysis');
+});
+</script>
+</body>
+</html>

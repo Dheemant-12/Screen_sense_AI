@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ScreenSense Overlay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --glass: rgba(8, 8, 18, 0.82);
+    --glass-border: rgba(255,255,255,0.08);
+    --text: rgba(240, 238, 255, 0.95);
+    --muted: rgba(240,238,255,0.45);
+    --accent: #7c6cfc;
+    --ts-color: rgba(120,100,255,0.7);
+  }
+
+  body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .overlay {
+    width: 860px;
+    min-height: 80px;
+    max-height: 220px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(120,100,255,0.1);
+  }
+
+  /* Top bar with mode indicator */
+  .overlay-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: move;
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+  }
+
+  .mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    -webkit-app-region: no-drag;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #32dc96;
+    animation: blink 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px #32dc96; }
+    50% { opacity: 0.3; box-shadow: none; }
+  }
+
+  .overlay-controls {
+    display: flex;
+    gap: 4px;
+    -webkit-app-region: no-drag;
+  }
+
+  .ctrl-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: transparent;
+    color: var(--muted);
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+  /* Caption display area */
+  .captions-area {
+    flex: 1;
+    padding: 10px 16px 12px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .captions-area::-webkit-scrollbar { display: none; }
+
+  .caption-line {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    animation: line-in 0.18s ease;
+    line-height: 1.6;
+  }
+
+  @keyframes line-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .caption-ts {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--ts-color);
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+    margin-top: 3px;
+  }
+
+  .caption-text {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  .caption-text.current {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* Scene mode has different styling */
+  .scene-line .caption-text {
+    font-size: 13px;
+    color: rgba(255, 200, 100, 0.9);
+    line-height: 1.5;
+  }
+
+  /* Speaker label (for diarization) */
+  .speaker-tag {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(124,108,252,0.15);
+    color: rgba(160,140,255,0.8);
+    margin-right: 2px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+
+  /* Font size controls */
+  .font-sm .caption-text { font-size: 13px; }
+  .font-lg .caption-text { font-size: 18px; }
+  .font-xl .caption-text { font-size: 22px; }
+
+  /* Idle state */
+  .idle-msg {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 14px 0;
+    display: none;
+  }
+  .idle-msg.show { display: block; }
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay">
+  <div class="overlay-bar">
+    <div class="mode-indicator">
+      <div class="live-dot" id="liveDot" style="display:none"></div>
+      <span id="modeLabel">ScreenSense AI</span>
+    </div>
+    <div class="overlay-controls">
+      <button class="ctrl-btn" onclick="adjustFont(-1)" title="Smaller text">A-</button>
+      <button class="ctrl-btn" onclick="adjustFont(1)" title="Larger text">A+</button>
+      <button class="ctrl-btn" onclick="toggleClickThrough()" title="Toggle click-through" id="ctBtn">⊙</button>
+      <button class="ctrl-btn" onclick="window.ss.closeWindow()" title="Close overlay">✕</button>
+    </div>
+  </div>
+  <div class="captions-area" id="captionsArea">
+    <div class="idle-msg show" id="idleMsg">Activate a mode from the ScreenSense panel to begin</div>
+  </div>
+</div>
+
+<script>
+let currentMode = null;
+let fontStep = 0; // -1, 0, 1, 2
+let isClickThrough = false;
+const MAX_LINES = 6;
+let lines = [];
+
+const area = document.getElementById('captionsArea');
+const idle = document.getElementById('idleMsg');
+const liveDot = document.getElementById('liveDot');
+const modeLabel = document.getElementById('modeLabel');
+
+const MODE_LABELS = {
+  'live-captions': '💬 Live Captions',
+  'scene-explain': '🎬 Scene Explainer',
+  'transcript': '📝 Transcript Notes',
+  'summarizer': '✨ Summarizer'
+};
+
+function addLine(text, timestamp, type = 'caption', speaker = null) {
+  idle.classList.remove('show');
+
+  // Dim previous "current" line
+  document.querySelectorAll('.caption-line').forEach(el => {
+    el.querySelector('.caption-text')?.classList.remove('current');
+  });
+
+  const div = document.createElement('div');
+  div.className = `caption-line ${type === 'scene' ? 'scene-line' : ''}`;
+
+  let inner = `<span class="caption-ts">${timestamp}</span>`;
+  if (speaker) inner += `<span class="speaker-tag">${speaker}</span>`;
+  inner += `<span class="caption-text current">${text}</span>`;
+  div.innerHTML = inner;
+
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+
+  // Prune old lines
+  lines.push(div);
+  if (lines.length > MAX_LINES) {
+    lines[0].remove();
+    lines.shift();
+  }
+}
+
+function adjustFont(dir) {
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('font-sm', 'font-lg', 'font-xl');
+  fontStep = Math.max(-1, Math.min(2, fontStep + dir));
+  if (fontStep === -1) overlay.classList.add('font-sm');
+  if (fontStep === 1)  overlay.classList.add('font-lg');
+  if (fontStep === 2)  overlay.classList.add('font-xl');
+}
+
+function toggleClickThrough() {
+  isClickThrough = !isClickThrough;
+  window.ss.setOverlayClickThrough(isClickThrough);
+  document.getElementById('ctBtn').style.color = isClickThrough ? '#7c6cfc' : '';
+}
+
+// Listen to IPC events
+window.ss.on('mode:active', (mode) => {
+  currentMode = mode;
+  isClickThrough = false;
+  window.ss.setOverlayClickThrough(false);
+  document.getElementById('ctBtn').style.color = '';
+  liveDot.style.display = 'block';
+  modeLabel.textContent = MODE_LABELS[mode] || mode;
+  idle.classList.remove('show');
+  area.innerHTML = '';
+  area.appendChild(idle);
+  lines = [];
+});
+
+window.ss.on('transcript:new', (entry) => {
+  if (currentMode === 'scene-explain') return;
+  addLine(entry.text, entry.time, 'caption', entry.speaker || null);
+});
+
+window.ss.on('scene:new', (entry) => {
+  addLine(entry.text, entry.time, 'scene');
+});
+
+window.ss.on('session:stopped', () => {
+  liveDot.style.display = 'none';
+  modeLabel.textContent = 'ScreenSense AI';
+  currentMode = null;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Select Area</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+    cursor: crosshair;
+  }
+
+  body {
+    background: transparent;
+    color: #fff;
+    user-select: none;
+    outline: none;
+  }
+
+  .hud {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(12, 14, 24, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .hud.error {
+    color: #ffd6d6;
+    border-color: rgba(255, 100, 100, 0.45);
+    background: rgba(40, 10, 18, 0.92);
+    animation: hud-pop 0.18s ease;
+  }
+
+  @keyframes hud-pop {
+    from { transform: translateX(-50%) scale(0.96); }
+    to { transform: translateX(-50%) scale(1); }
+  }
+
+  #screenMirror {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: none;
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  #selection {
+    position: fixed;
+    border: 2px solid #38b6ff;
+    background: transparent;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.9) inset,
+      0 0 18px rgba(56, 182, 255, 0.55);
+    display: none;
+    z-index: 1;
+  }
+
+  #selection::before,
+  #selection::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+  }
+
+  #selection::before {
+    left: -2px;
+    top: -2px;
+    border-left: 3px solid #fff;
+    border-top: 3px solid #fff;
+  }
+
+  #selection::after {
+    right: -2px;
+    bottom: -2px;
+    border-right: 3px solid #fff;
+    border-bottom: 3px solid #fff;
+  }
+</style>
+</head>
+<body>
+  <img id="screenMirror" alt="">
+  <div class="hud" id="hud">Drag to select an area. Press Esc to cancel.</div>
+  <div id="selection"></div>
+
+<script>
+let startPoint = null;
+let currentRect = null;
+let displayBounds = { x: 0, y: 0 };
+let didDrag = false;
+const selection = document.getElementById('selection');
+const hud = document.getElementById('hud');
+const screenMirror = document.getElementById('screenMirror');
+
+function cancelWithMessage(message) {
+  hud.textContent = message;
+  hud.classList.add('error');
+  setTimeout(() => window.selectorApi.cancel(), 1500);
+}
+
+window.selectorApi.onInit((payload) => {
+  displayBounds = payload?.displayBounds || displayBounds;
+  if (payload?.backgroundImage) {
+    screenMirror.src = payload.backgroundImage;
+    screenMirror.style.display = 'block';
+  }
+  document.body.focus();
+  window.focus();
+});
+
+function updateSelection(rect) {
+  selection.style.display = 'block';
+  selection.style.left = `${rect.left}px`;
+  selection.style.top = `${rect.top}px`;
+  selection.style.width = `${rect.width}px`;
+  selection.style.height = `${rect.height}px`;
+}
+
+function normalizeRect(start, end) {
+  const left = Math.min(start.x, end.x);
+  const top = Math.min(start.y, end.y);
+  const width = Math.abs(end.x - start.x);
+  const height = Math.abs(end.y - start.y);
+  return { left, top, width, height };
+}
+
+window.addEventListener('mousedown', (event) => {
+  if (event.button !== 0) {
+    window.selectorApi.cancel();
+    return;
+  }
+
+  startPoint = { x: event.clientX, y: event.clientY };
+  currentRect = null;
+  didDrag = false;
+  updateSelection({ left: event.clientX, top: event.clientY, width: 0, height: 0 });
+});
+
+window.addEventListener('mousemove', (event) => {
+  if (!startPoint) return;
+  didDrag = true;
+  currentRect = normalizeRect(startPoint, { x: event.clientX, y: event.clientY });
+  updateSelection(currentRect);
+});
+
+window.addEventListener('mouseup', () => {
+  if (!startPoint || !currentRect || !didDrag) {
+    startPoint = null;
+    currentRect = null;
+    didDrag = false;
+    selection.style.display = 'none';
+    window.selectorApi.cancel();
+    return;
+  }
+
+  if (currentRect.width < 30 || currentRect.height < 30) {
+    startPoint = null;
+    currentRect = null;
+    didDrag = false;
+    selection.style.display = 'none';
+    cancelWithMessage('Selection too small. Draw an area at least 30 x 30 pixels.');
+    return;
+  }
+
+  window.selectorApi.submitRegion({
+    x: displayBounds.x + currentRect.left,
+    y: displayBounds.y + currentRect.top,
+    width: currentRect.width,
+    height: currentRect.height,
+    displayId: String(displayBounds.id || '')
+  });
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' || event.key === 'Esc') {
+    event.preventDefault();
+    window.selectorApi.cancel();
+  }
+});
+
+window.addEventListener('keyup', (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    window.selectorApi.cancel();
+  }
+});
+
+window.addEventListener('blur', () => {
+  document.body.focus();
+});
+
+document.body.tabIndex = -1;
+document.body.focus();
+</script>
+</body>
+</html>

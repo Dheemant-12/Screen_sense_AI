@@ -1,0 +1,4 @@
+flask
+faster-whisper
+numpy
+imageio-ffmpeg

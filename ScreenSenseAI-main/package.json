@@ -1,0 +1,116 @@
+{
+  "name": "screensense-ai",
+  "version": "1.0.8",
+  "description": "AI-powered screen overlay for captions and scene analysis",
+  "author": "chanikya07 <bellamchanikya@gmail.com>",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:whisper": "node scripts/build-local-whisper.js",
+    "build:win": "npm run build:whisper && electron-builder --win --publish never",
+    "build:mac": "npm run build:whisper && electron-builder --mac --publish never",
+    "build:mac:x64": "npm run build:whisper && electron-builder --mac dmg --x64 --publish never",
+    "build:mac:arm64": "npm run build:whisper && electron-builder --mac dmg --arm64 --publish never",
+    "build:linux": "npm run build:whisper && electron-builder --linux --publish never"
+  },
+  "build": {
+    "appId": "ai.screensense.desktop",
+    "productName": "ScreenSense AI",
+    "directories": {
+      "output": "dist"
+    },
+    "afterPack": "scripts/verify-packaged-whisper.js",
+    "artifactName": "ScreenSense-AI-Setup-${version}.${ext}",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "local-whisper-bin/**/*",
+      "local_whisper_server.py",
+      "requirements-local-whisper.txt",
+      "start-local-whisper.bat",
+      "start-local-whisper.sh",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "local_whisper_server*",
+      "ffmpeg*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/"
+      },
+      {
+        "from": "local-whisper-bin/",
+        "to": "local-whisper-bin/"
+      },
+      {
+        "from": "local_whisper_server.py",
+        "to": "local_whisper_server.py"
+      },
+      {
+        "from": "requirements-local-whisper.txt",
+        "to": "requirements-local-whisper.txt"
+      },
+      {
+        "from": "start-local-whisper.bat",
+        "to": "start-local-whisper.bat"
+      },
+      {
+        "from": "start-local-whisper.sh",
+        "to": "start-local-whisper.sh"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false,
+      "publisherName": "ScreenSense AI",
+      "artifactName": "ScreenSense-AI-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.utilities",
+      "artifactName": "ScreenSense-AI-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Utility",
+      "maintainer": "chanikya07 <bellamchanikya@gmail.com>",
+      "artifactName": "ScreenSense-AI-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^25.0.0"
+  }
+}

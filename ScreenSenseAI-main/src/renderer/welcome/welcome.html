@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenSense AI Welcome</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0d12;
+    --panel: #111722;
+    --panel-2: #151e2b;
+    --line: rgba(255,255,255,0.09);
+    --line-2: rgba(255,255,255,0.16);
+    --text: #eef3f8;
+    --muted: rgba(238,243,248,0.64);
+    --soft: rgba(238,243,248,0.42);
+    --blue: #4fb4ff;
+    --violet: #8d7aff;
+    --green: #35d49a;
+    --amber: #ffbd5a;
+    --coral: #ff6f75;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    color: var(--text);
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
+    letter-spacing: 0;
+  }
+
+  body {
+    padding: clamp(6px, 1.4vw, 10px);
+    user-select: none;
+  }
+
+  .shell {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background:
+      linear-gradient(145deg, rgba(79,180,255,0.13), transparent 34%),
+      linear-gradient(315deg, rgba(53,212,154,0.12), transparent 31%),
+      var(--bg);
+    box-shadow: 0 26px 90px rgba(0,0,0,0.62);
+    display: grid;
+    grid-template-rows: 48px 1fr;
+  }
+
+  .titlebar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 18px;
+    border-bottom: 1px solid var(--line);
+    -webkit-app-region: drag;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(79,180,255,0.22), rgba(141,122,255,0.2));
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .brand-mark svg { width: 17px; height: 17px; }
+
+  .brand-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .brand-name {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    color: var(--soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .window-actions {
+    display: flex;
+    height: 48px;
+    -webkit-app-region: no-drag;
+  }
+
+  .win-btn {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    background: transparent;
+    color: rgba(238,243,248,0.72);
+    cursor: pointer;
+    font-size: 14px;
+    position: relative;
+  }
+
+  .win-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .win-btn.close:hover { background: #c42b1c; color: #fff; }
+
+  .win-btn.maximize::before {
+    content: "";
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    position: absolute;
+    top: 17px;
+    left: 18px;
+  }
+
+  .win-btn.maximize.restore::before {
+    top: 20px;
+    left: 15px;
+  }
+
+  .win-btn.maximize.restore::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    background: var(--bg);
+  }
+
+  .content {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .main {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(16px, 3vw, 30px);
+    gap: clamp(14px, 2.4vw, 22px);
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+
+  .main.sub-view {
+    overflow: hidden;
+  }
+
+  .hero {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  h1 {
+    max-width: 650px;
+    font-size: clamp(28px, 4.2vw, 38px);
+    line-height: 1.05;
+    font-weight: 760;
+    letter-spacing: 0;
+    margin-bottom: 14px;
+  }
+
+  .lead {
+    max-width: 680px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .btn {
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--line-2);
+    padding: 0 14px;
+    color: var(--text);
+    background: rgba(255,255,255,0.045);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .btn svg { width: 16px; height: 16px; }
+  .btn:hover { background: rgba(255,255,255,0.08); }
+
+  .btn.primary {
+    border-color: rgba(79,180,255,0.44);
+    background: linear-gradient(135deg, rgba(79,180,255,0.96), rgba(141,122,255,0.9));
+    color: #061019;
+  }
+
+  .btn.primary:hover {
+    filter: brightness(1.06);
+  }
+
+  .device {
+    min-height: 228px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.035);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 34px 1fr;
+  }
+
+  .device-top {
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+  }
+
+  .traffic {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+  }
+
+  .device-body {
+    padding: 16px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 14px;
+  }
+
+  .orb-demo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    margin-left: auto;
+    background: radial-gradient(circle at 35% 35%, #2a2f44, #080a11);
+    border: 1px solid rgba(79,180,255,0.38);
+    box-shadow: 0 0 34px rgba(79,180,255,0.22);
+    display: grid;
+    place-items: center;
+  }
+
+  .orb-demo svg { width: 28px; height: 28px; }
+
+  .mini-panel {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(10,13,19,0.65);
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .mini-row {
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .mini-row.short { width: 62%; }
+  .mini-row.blue { background: rgba(79,180,255,0.42); width: 76%; }
+  .mini-row.green { background: rgba(53,212,154,0.34); width: 54%; }
+
+  .feature-grid {
+    flex: 0 0 auto;
+    min-height: max-content;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .feature {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.035);
+    padding: 15px;
+    min-height: 154px;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 9px;
+  }
+
+  .feature-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,0.09);
+  }
+
+  .feature-icon svg { width: 18px; height: 18px; }
+  .feature.blue .feature-icon { color: var(--blue); background: rgba(79,180,255,0.1); }
+  .feature.amber .feature-icon { color: var(--amber); background: rgba(255,189,90,0.1); }
+  .feature.coral .feature-icon { color: var(--coral); background: rgba(255,111,117,0.1); }
+  .feature.green .feature-icon { color: var(--green); background: rgba(53,212,154,0.1); }
+  .feature.violet .feature-icon { color: var(--violet); background: rgba(141,122,255,0.1); }
+
+  .feature h2 {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .feature p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .feature.actionable {
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .feature.actionable:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .feature.actionable:focus-visible {
+    outline: 2px solid rgba(79,180,255,0.5);
+    outline-offset: 2px;
+  }
+
+  .guide {
+    display: none;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.035);
+    flex: 0 0 auto;
+  }
+
+  .guide.visible {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .guide-steps {
+    border-right: 1px solid var(--line);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .step-btn {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    padding: 11px 12px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .step-btn strong {
+    display: block;
+    color: inherit;
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  .step-btn span {
+    display: block;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .step-btn:hover { background: rgba(255,255,255,0.045); color: var(--text); }
+  .step-btn.active {
+    color: var(--text);
+    border-color: rgba(53,212,154,0.26);
+    background: rgba(53,212,154,0.1);
+  }
+
+  .guide-detail {
+    min-width: 0;
+    padding: clamp(16px, 2.6vw, 24px);
+    display: grid;
+    align-content: start;
+    gap: 16px;
+  }
+
+  .guide-actions {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .guide-kicker {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .guide-detail h2 {
+    font-size: clamp(21px, 3vw, 26px);
+    line-height: 1.15;
+  }
+
+  .guide-detail p {
+    max-width: 640px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .check-list {
+    display: grid;
+    gap: 9px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .check-list div {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+
+  .check-list a {
+    color: #9bd8ff;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .check-list a:hover { text-decoration: underline; }
+
+  .check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .check::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 5px rgba(53,212,154,0.13);
+  }
+
+  .footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+
+  .footer-copy {
+    color: var(--soft);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+
+  .hidden { display: none; }
+
+  .history {
+    display: none;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.035);
+    flex: 1 1 auto;
+    grid-template-columns: 300px 1fr;
+  }
+
+  .history.visible {
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .history-list {
+    border-right: 1px solid var(--line);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .history-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .history-list-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .history-count {
+    color: var(--soft);
+    font-size: 11px;
+  }
+
+  .history-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+
+  .history-item {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    padding: 11px 12px;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+  }
+
+  .history-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .history-item.active {
+    border-color: rgba(79,180,255,0.34);
+    background: rgba(79,180,255,0.1);
+  }
+
+  .history-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .history-item-title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .history-item-date {
+    color: var(--soft);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .history-item-preview {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .history-item-meta {
+    margin-top: 7px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .history-pill {
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+
+  .history-empty {
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 18px 14px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .history-detail {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .history-detail-head {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .history-detail-head h2 {
+    font-size: clamp(18px, 2.4vw, 22px);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .history-detail-sub {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .history-detail-actions {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .history-detail-body {
+    padding: 16px 18px 18px;
+    overflow-y: auto;
+    min-height: 0;
+    display: grid;
+    gap: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+
+  .history-section {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(10,13,19,0.45);
+    overflow: hidden;
+  }
+
+  .history-section-head {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--soft);
+  }
+
+  .history-section-body {
+    padding: 10px 12px 12px;
+    display: grid;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
+  }
+
+  .history-line {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .history-line strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .history-chat.user .history-line { color: #9bd8ff; }
+  .history-chat.assistant .history-line { color: #d8d2ff; }
+
+  .history-audio {
+    display: grid;
+    gap: 8px;
+  }
+
+  .history-audio audio {
+    width: 100%;
+  }
+
+  .history-report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+  }
+
+  .history-report-stat {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(255,255,255,0.03);
+  }
+
+  .history-report-label {
+    color: var(--soft);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .history-report-value {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .history-placeholder {
+    padding: 28px 18px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  @media (max-width: 930px) {
+    .hero { grid-template-columns: 1fr; }
+    .device { display: none; }
+    .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 760px) {
+    .guide.visible,
+    .history.visible { grid-template-columns: 1fr; }
+    .guide-steps,
+    .history-list {
+      border-right: 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .footer-actions {
+      flex-wrap: wrap;
+    }
+    .footer-actions .btn {
+      flex: 1 1 150px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 4px; }
+    .shell { border-radius: 12px; }
+    .titlebar { padding-left: 12px; }
+    .brand-sub { display: none; }
+    .window-actions,
+    .win-btn {
+      height: 44px;
+    }
+    .win-btn { width: 42px; }
+    .main { padding: 14px; }
+    .hero-actions .btn {
+      flex: 1 1 100%;
+    }
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-height: 680px) {
+    .main {
+      padding-top: 16px;
+      padding-bottom: 16px;
+    }
+    .hero {
+      gap: 14px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .lead {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .hero-actions {
+      margin-top: 14px;
+    }
+    .guide-steps,
+    .guide-detail {
+      padding: 14px;
+    }
+    .step-btn {
+      padding: 9px 10px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="titlebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3.5 12s3.1-5 8.5-5 8.5 5 8.5 5-3.1 5-8.5 5-8.5-5-8.5-5Z" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="2.6" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div class="brand-name">ScreenSense AI</div>
+        <div class="brand-sub">desktop assistant</div>
+      </div>
+    </div>
+    <div class="window-actions">
+      <button class="win-btn" id="minimizeBtn" title="Minimize">-</button>
+      <button class="win-btn maximize" id="maximizeBtn" title="Maximize" aria-label="Maximize"></button>
+      <button class="win-btn close" id="closeBtn" title="Close">x</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <main class="main">
+      <section class="hero">
+        <div>
+          <h1>Understand anything on your screen while you work.</h1>
+          <p class="lead">ScreenSense AI gives you a professional floating assistant for live captions, screen explanations, transcripts, summaries, and presentation-ready notes without forcing you to leave the app you are using.</p>
+          <div class="hero-actions">
+            <button class="btn primary" id="startBtn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7-11-7Z" fill="currentColor"/></svg>
+              Start ScreenSense
+            </button>
+            <button class="btn" id="guideBtn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 5h9a3 3 0 0 1 3 3v11H8a2 2 0 0 1-2-2V5Z" stroke="currentColor" stroke-width="1.6"/></svg>
+              New user guide
+            </button>
+            <button class="btn" id="historyBtn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 6.5A4.5 4.5 0 0 1 9.5 2h5A4.5 4.5 0 0 1 19 6.5v3A4.5 4.5 0 0 1 14.5 14H11l-5 4v-4.4A4.5 4.5 0 0 1 5 9.5v-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 7.5h6M9 10.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Conversation History
+            </button>
+            <button class="btn" id="settingsBtn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" stroke="currentColor" stroke-width="1.6"/><path d="M19 12a7 7 0 0 0-.1-1.1l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-1.9-1.1L14.3 3h-4.6l-.4 2.8a7.5 7.5 0 0 0-1.9 1.1l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.1l-2 1.5 2 3.5 2.4-1c.6.5 1.2.8 1.9 1.1l.4 2.8h4.6l.4-2.8c.7-.3 1.3-.6 1.9-1.1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1.1Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Settings
+            </button>
+          </div>
+        </div>
+
+        <div class="device" aria-hidden="true">
+          <div class="device-top">
+            <span class="traffic"></span>
+            <span class="traffic"></span>
+            <span class="traffic"></span>
+          </div>
+          <div class="device-body">
+            <div class="orb-demo">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3.5 12s3.1-5 8.5-5 8.5 5 8.5 5-3.1 5-8.5 5-8.5-5-8.5-5Z" stroke="#9bd8ff" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="2.8" fill="#4fb4ff"/>
+              </svg>
+            </div>
+            <div class="mini-panel">
+              <span class="mini-row blue"></span>
+              <span class="mini-row"></span>
+              <span class="mini-row short"></span>
+              <span class="mini-row green"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid" id="overviewView">
+        <article class="feature blue">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h10M5 17h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <h2>Live Captions</h2>
+          <p>Transcribe spoken audio in real time and keep important lines visible while meetings, videos, or lessons are playing.</p>
+        </article>
+        <article class="feature amber">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 15l3-4 2 3 1.5-2 2.5 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h2>Scene Explain</h2>
+          <p>Capture the selected screen or window and ask AI to describe what is happening visually in plain language.</p>
+        </article>
+        <article class="feature coral">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v16H7V4Z" stroke="currentColor" stroke-width="1.7"/><path d="M10 8h4M10 12h4M10 16h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <h2>Transcript Notes</h2>
+          <p>Turn speech into cleaner notes so long sessions become easier to review, export, and share.</p>
+        </article>
+        <article class="feature green">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 9h8M8 12h8M8 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <h2>Summarizer</h2>
+          <p>Collect audio and visual context, then export a professional Markdown summary with key points and timelines.</p>
+        </article>
+        <article class="feature violet">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M8 10a4 4 0 1 1 8 0v2a4 4 0 1 1-8 0v-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <h2>Face Analysis</h2>
+          <p>Analyze visible expressions and presentation tone when your workflow needs audience or speaker context.</p>
+        </article>
+        <article class="feature blue">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10M8 10l4 4 4-4M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h2>Exports</h2>
+          <p>Save session notes, summaries, and generated outputs directly to Downloads for follow-up work.</p>
+        </article>
+        <article class="feature violet">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.5 18 7v4.8c0 3.8-2.4 6.4-6 7.7-3.6-1.3-6-3.9-6-7.7V7l6-2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9.3 12 1.8 1.8 3.7-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h2>AI Fake Detector</h2>
+          <p>Review on-screen images or video for signs of synthetic media, then get a clear real, fake, or uncertain verdict with the visual evidence that influenced it.</p>
+        </article>
+        <article class="feature amber">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 6a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V6Z" stroke="currentColor" stroke-width="1.7"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <h2>Call Recording</h2>
+          <p>Record system audio, your microphone, or both during a call, then save the audio and use the captured transcript for notes, summaries, and review.</p>
+        </article>
+        <article class="feature blue">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6.5A4.5 4.5 0 0 1 9.5 2h5A4.5 4.5 0 0 1 19 6.5v3A4.5 4.5 0 0 1 14.5 14H11l-5 4v-4.4A4.5 4.5 0 0 1 5 9.5v-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 7.5h6M9 10.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <h2>Session Chat</h2>
+          <p>Ask questions about the active session while ScreenSense uses recent captions, screen observations, and saved context to answer without leaving your workflow.</p>
+        </article>
+        <article class="feature green actionable" id="historyFeatureCard" tabindex="0" role="button" aria-label="Open Conversation History">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 9h8M8 12h6M8 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <h2>Conversation History</h2>
+          <p>Review previous sessions from Features, including captions, scene notes, face analysis, and chat questions you asked ScreenSense.</p>
+        </article>
+        <article class="feature amber">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h2>Activity Insights</h2>
+          <p>Review focus time, app switches, usage tables, and a scrollable timeline of application activity from the ScreenSense panel.</p>
+        </article>
+      </section>
+
+      <section class="guide" id="guideView">
+        <div class="guide-steps">
+          <button class="step-btn active" data-step="0"><strong>1. Set up API keys</strong><span>Create provider keys and add them in Settings.</span></button>
+          <button class="step-btn" data-step="1"><strong>2. Choose a source</strong><span>Select a screen, window, or region.</span></button>
+          <button class="step-btn" data-step="2"><strong>3. Pick a mode</strong><span>Captions, scene explain, notes, or summary.</span></button>
+          <button class="step-btn" data-step="3"><strong>4. Let it run</strong><span>Keep working while the assistant gathers context.</span></button>
+          <button class="step-btn" data-step="4"><strong>5. Export results</strong><span>Turn the session into useful files.</span></button>
+        </div>
+        <div class="guide-detail">
+          <div class="guide-actions">
+            <button class="btn" id="backToFeaturesBtn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M11 6 5 12l6 6M6 12h13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Back to features
+            </button>
+          </div>
+          <div class="guide-kicker" id="guideKicker">Step 1</div>
+          <h2 id="guideTitle">Set up API keys for ScreenSense AI.</h2>
+          <p id="guideText">An API key is a secure code that lets ScreenSense connect to an AI provider from your own account. Live Captions run locally with Whisper and do not require a cloud API key. For cloud AI features such as chat, summaries, translation, cleanup, and fallback providers, start with Groq because it is the simplest option to add in Settings.</p>
+          <div class="check-list" id="guideChecks">
+            <div><span class="check" aria-hidden="true"></span><span>Recommended: open the <a class="external-link" href="https://console.groq.com" target="_blank" rel="noopener noreferrer">Groq Console</a>, sign in, go to API Keys, create a new key, and copy the key that starts with gsk_.</span></div>
+            <div><span class="check" aria-hidden="true"></span><span>Open ScreenSense Settings, paste the Groq key into the Groq API Key field, and save your settings.</span></div>
+            <div><span class="check" aria-hidden="true"></span><span>Optional: open <a class="external-link" href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">Google AI Studio</a> for Gemini, create a key, and store it in .env.local as GOOGLE_AI_STUDIO_API_KEY=your_key if you use environment-based provider keys.</span></div>
+            <div><span class="check" aria-hidden="true"></span><span>Optional: use <a class="external-link" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI API Keys</a> or the <a class="external-link" href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">Anthropic Console</a> only when you need those provider-specific features.</span></div>
+            <div><span class="check" aria-hidden="true"></span><span>Keep every key private. Do not post it online, send it in chat, or share screenshots where the key is visible.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="history" id="historyView">
+        <div class="history-list">
+          <div class="history-list-head">
+            <div>
+              <h2>Conversation History</h2>
+              <div class="history-count" id="historyCount">0 saved sessions</div>
+            </div>
+            <button class="btn" id="clearHistoryBtn" type="button">Clear all</button>
+          </div>
+          <button class="btn" id="backFromHistoryBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M11 6 5 12l6 6M6 12h13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back to features
+          </button>
+          <div class="history-items" id="historyItems"></div>
+        </div>
+        <div class="history-detail">
+          <div class="history-detail-head">
+            <div>
+              <h2 id="historyDetailTitle">Select a session</h2>
+              <div class="history-detail-sub" id="historyDetailSub">Saved sessions appear here after you stop a ScreenSense task.</div>
+            </div>
+            <div class="history-detail-actions">
+              <button class="btn" id="deleteHistoryBtn" type="button" disabled>Delete</button>
+            </div>
+          </div>
+          <div class="history-detail-body" id="historyDetailBody">
+            <div class="history-placeholder">Run a session, stop it from the panel, then reopen Conversation History to review what was captured.</div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p class="footer-copy">ScreenSense runs from the desktop orb. This welcome page can be reopened from the tray whenever you want a quick refresher.</p>
+        <div class="footer-actions">
+          <button class="btn" id="footerGuideBtn">New user guide</button>
+          <button class="btn primary" id="footerStartBtn">Start</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+const overviewView = document.getElementById('overviewView');
+const guideView = document.getElementById('guideView');
+const historyView = document.getElementById('historyView');
+const mainView = document.querySelector('.main');
+const footerGuideBtn = document.getElementById('footerGuideBtn');
+const heroSection = document.querySelector('.hero');
+const footerSection = document.querySelector('.footer');
+const historyItemsEl = document.getElementById('historyItems');
+const historyCountEl = document.getElementById('historyCount');
+const historyDetailTitleEl = document.getElementById('historyDetailTitle');
+const historyDetailSubEl = document.getElementById('historyDetailSub');
+const historyDetailBodyEl = document.getElementById('historyDetailBody');
+const deleteHistoryBtn = document.getElementById('deleteHistoryBtn');
+
+let historySummaries = [];
+let selectedHistoryId = null;
+const stepButtons = Array.from(document.querySelectorAll('.step-btn'));
+const guideKicker = document.getElementById('guideKicker');
+const guideTitle = document.getElementById('guideTitle');
+const guideText = document.getElementById('guideText');
+const guideChecks = document.getElementById('guideChecks');
+
+const steps = [
+  {
+    title: 'Set up API keys for ScreenSense AI.',
+    text: 'An API key is a secure code that lets ScreenSense connect to an AI provider from your own account. Live Captions run locally with Whisper and do not require a cloud API key. For cloud AI features such as chat, summaries, translation, cleanup, and fallback providers, start with Groq because it is the simplest option to add in Settings.',
+    checks: [
+      'Recommended: open the <a class="external-link" href="https://console.groq.com" target="_blank" rel="noopener noreferrer">Groq Console</a>, sign in, go to API Keys, create a new key, and copy the key that starts with gsk_.',
+      'Open ScreenSense Settings, paste the Groq key into the Groq API Key field, and save your settings.',
+      'Optional: open <a class="external-link" href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">Google AI Studio</a> for Gemini, create a key, and store it in .env.local as GOOGLE_AI_STUDIO_API_KEY=your_key if you use environment-based provider keys.',
+      'Optional: use <a class="external-link" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI API Keys</a> or the <a class="external-link" href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">Anthropic Console</a> only when you need those provider-specific features.',
+      'Keep every key private. Do not post it online, send it in chat, or share screenshots where the key is visible.'
+    ]
+  },
+  {
+    title: 'Choose what ScreenSense should observe.',
+    text: 'Open the panel from the orb or the Start button, then select the screen or app window you want ScreenSense to use. For focused work, choose a specific region so analysis stays precise.',
+    checks: ['Select screen, window, or region', 'Keep private windows out of capture', 'Change source any time from the panel']
+  },
+  {
+    title: 'Pick the mode that matches your task.',
+    text: 'Use Live Captions for spoken content, Scene Explain for visuals, Transcript Notes for meetings, Summarizer for complete session reports, or Face Analysis when presenter tone matters.',
+    checks: ['Use one mode per task tab', 'Add more task tabs when needed', 'Switch modes without restarting the app']
+  },
+  {
+    title: 'Let the assistant collect useful context.',
+    text: 'ScreenSense keeps the orb compact while the overlay and panel show live output. Let it run while the video, meeting, or lesson continues so the export has enough evidence.',
+    checks: ['Keep content playing', 'Watch live output in the overlay', 'Stop the session when you are done']
+  },
+  {
+    title: 'Export clean notes when the work is complete.',
+    text: 'When a session is finished, export notes or summaries from the panel. Summaries combine visual observations and transcript evidence into a structured Markdown document.',
+    checks: ['Save files to Downloads', 'Review timelines and takeaways', 'Generate follow-up material from summaries']
+  }
+];
+
+function iconCheck(text) {
+  return `<div><span class="check" aria-hidden="true"></span><span>${text}</span></div>`;
+}
+
+function formatDuration(ms = 0) {
+  const totalSeconds = Math.max(0, Math.floor(Number(ms) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function formatHistoryDate(value) {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown date';
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function escapeHtml(text = '') {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function filePathToFileUrl(filePath = '') {
+  const normalized = String(filePath || '').replace(/\\/g, '/');
+  if (!normalized) return '';
+  return `file:///${normalized.replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/')}`;
+}
+
+function formatBytes(bytes = 0) {
+  const value = Number(bytes) || 0;
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function renderHistorySection(title, entries, formatter) {
+  if (!entries.length) return '';
+  const lines = entries.map(formatter).join('');
+  return `
+    <section class="history-section">
+      <div class="history-section-head">${escapeHtml(title)}</div>
+      <div class="history-section-body">${lines}</div>
+    </section>
+  `;
+}
+
+function renderActivityReportSection(report) {
+  if (!report) return '';
+  const metrics = report.metrics || {};
+  const stats = [
+    ['Focus Time', formatDuration(metrics.totalFocusedMs)],
+    ['Desktop Activity', formatDuration(metrics.totalForegroundMs)],
+    ['Longest Focus', formatDuration(metrics.longestFocusMs)],
+    ['Focus Sessions', String(metrics.focusSessions || 0)],
+    ['Primary App', metrics.topApp || '-'],
+    ['App Switches', String(metrics.switchCount || 0)]
+  ];
+  const appLines = (report.appUsage || []).slice(0, 12).map((entry) => `
+    <div class="history-line"><strong>${escapeHtml(entry.app || 'Application')}:</strong> ${escapeHtml(formatDuration(entry.focusedMs))} focus, ${escapeHtml(formatDuration(entry.runningMs))} running</div>
+  `).join('');
+
+  return `
+    <section class="history-section">
+      <div class="history-section-head">Activity Insights Report</div>
+      <div class="history-section-body">
+        ${report.summary ? `<div class="history-line">${escapeHtml(report.summary)}</div>` : ''}
+        ${report.recap ? `<div class="history-line">${escapeHtml(report.recap)}</div>` : ''}
+        <div class="history-report-grid">
+          ${stats.map(([label, value]) => `
+            <div class="history-report-stat">
+              <div class="history-report-label">${escapeHtml(label)}</div>
+              <div class="history-report-value">${escapeHtml(value)}</div>
+            </div>
+          `).join('')}
+        </div>
+        ${appLines}
+      </div>
+    </section>
+  `;
+}
+
+function renderHistoryDetailPlaceholder() {
+  historyDetailTitleEl.textContent = 'Select a session';
+  historyDetailSubEl.textContent = 'Saved sessions appear here after you stop a ScreenSense task.';
+  historyDetailBodyEl.innerHTML = '<div class="history-placeholder">Run a session, stop it from the panel, then reopen Conversation History to review what was captured.</div>';
+  deleteHistoryBtn.disabled = true;
+}
+
+function renderHistoryDetail(record) {
+  if (!record) {
+    renderHistoryDetailPlaceholder();
+    return;
+  }
+
+  const stats = record.stats || {};
+  const metaParts = [
+    record.modeLabel || record.mode || 'Session',
+    formatDuration(record.durationMs),
+    `${stats.chatMessages || 0} chat`,
+    `${stats.transcripts || 0} captions`,
+    `${stats.scenes || 0} scenes`,
+    stats.audioRecordings ? `${stats.audioRecordings} audio` : '',
+    stats.activityReports ? `${stats.activityReports} report` : ''
+  ].filter(Boolean);
+
+  historyDetailTitleEl.textContent = record.title || record.modeLabel || 'ScreenSense Session';
+  historyDetailSubEl.textContent = [
+    formatHistoryDate(record.endedAt),
+    record.sourceName ? `Source: ${record.sourceName}` : '',
+    metaParts.join(' • ')
+  ].filter(Boolean).join(' | ');
+
+  const sections = [
+    renderActivityReportSection(record.activityReport),
+    renderHistorySection('Call Recordings', record.audioRecordings || [], (audio) => {
+      const src = filePathToFileUrl(audio.filePath);
+      return `
+        <div class="history-audio">
+          <div class="history-line"><strong>${escapeHtml(audio.filename || 'Call recording')}</strong> ${escapeHtml(formatBytes(audio.size))}${audio.mode ? ` | ${escapeHtml(audio.mode)}` : ''}</div>
+          ${src ? `<audio controls src="${escapeHtml(src)}"></audio>` : ''}
+          <div class="history-line">${escapeHtml(audio.filePath || '')}</div>
+        </div>
+      `;
+    }),
+    renderHistorySection('Session Chat', record.chatMessages || [], (message) => `
+      <div class="history-chat ${escapeHtml(message.role || 'assistant')}">
+        <div class="history-line"><strong>${escapeHtml(message.role === 'user' ? 'You' : 'ScreenSense')}:</strong> ${escapeHtml(message.text || '')}</div>
+      </div>
+    `),
+    renderHistorySection('Live Captions / Transcript', record.transcript || [], (entry) => `
+      <div class="history-line"><strong>${escapeHtml(entry.time || '--:--')}:</strong> ${escapeHtml(entry.text || '')}</div>
+    `),
+    renderHistorySection('Scene Notes', record.scenes || [], (entry) => `
+      <div class="history-line"><strong>${escapeHtml(entry.time || '--:--')}:</strong> ${escapeHtml(entry.text || '')}</div>
+    `),
+    renderHistorySection('Face Analysis', record.faces || [], (entry) => `
+      <div class="history-line"><strong>${escapeHtml(entry.time || '--:--')}:</strong> ${escapeHtml(entry.text || '')}</div>
+    `),
+    renderHistorySection('Feed Output', record.feedEntries || [], (entry) => `
+      <div class="history-line"><strong>${escapeHtml(entry.time || '--:--')}:</strong> ${escapeHtml(entry.text || '')}</div>
+    `)
+  ].filter(Boolean);
+
+  historyDetailBodyEl.innerHTML = sections.length
+    ? sections.join('')
+    : '<div class="history-placeholder">This session was saved, but it did not contain any stored output.</div>';
+  deleteHistoryBtn.disabled = false;
+}
+
+function renderHistoryList() {
+  historyCountEl.textContent = `${historySummaries.length} saved session${historySummaries.length === 1 ? '' : 's'}`;
+
+  if (!historySummaries.length) {
+    historyItemsEl.innerHTML = '<div class="history-empty">No saved sessions yet. Start a task from the orb, let it capture content, then press Stop to save it here.</div>';
+    selectedHistoryId = null;
+    renderHistoryDetailPlaceholder();
+    return;
+  }
+
+  historyItemsEl.innerHTML = historySummaries.map((entry) => `
+    <button class="history-item ${entry.id === selectedHistoryId ? 'active' : ''}" type="button" data-history-id="${escapeHtml(entry.id)}">
+      <div class="history-item-top">
+        <div class="history-item-title">${escapeHtml(entry.modeLabel || entry.title || 'Session')}</div>
+        <div class="history-item-date">${escapeHtml(formatHistoryDate(entry.endedAt))}</div>
+      </div>
+      <div class="history-item-preview">${escapeHtml(entry.summary || 'Saved session')}</div>
+      <div class="history-item-meta">
+        <span class="history-pill">${escapeHtml(formatDuration(entry.durationMs))}</span>
+        <span class="history-pill">${Number(entry.stats?.chatMessages || 0)} chat</span>
+        <span class="history-pill">${Number(entry.stats?.transcripts || 0)} captions</span>
+        <span class="history-pill">${Number(entry.stats?.scenes || 0)} scenes</span>
+        ${Number(entry.stats?.audioRecordings || 0) ? `<span class="history-pill">${Number(entry.stats.audioRecordings)} audio</span>` : ''}
+        ${Number(entry.stats?.activityReports || 0) ? '<span class="history-pill">report</span>' : ''}
+      </div>
+    </button>
+  `).join('');
+
+  historyItemsEl.querySelectorAll('[data-history-id]').forEach((button) => {
+    button.addEventListener('click', () => {
+      void selectHistoryItem(button.dataset.historyId);
+    });
+  });
+
+  if (!selectedHistoryId || !historySummaries.some((entry) => entry.id === selectedHistoryId)) {
+    void selectHistoryItem(historySummaries[0].id);
+  }
+}
+
+async function loadConversationHistory() {
+  try {
+    historySummaries = await window.ss.listConversationHistory();
+  } catch (error) {
+    console.error('Failed to load conversation history:', error);
+    historySummaries = [];
+  }
+  renderHistoryList();
+}
+
+async function selectHistoryItem(id) {
+  selectedHistoryId = id;
+  renderHistoryList();
+  try {
+    const record = await window.ss.getConversationHistory(id);
+    renderHistoryDetail(record);
+  } catch (error) {
+    console.error('Failed to load history item:', error);
+    renderHistoryDetailPlaceholder();
+  }
+}
+
+function showView(view) {
+  const isGuide = view === 'guide';
+  const isHistory = view === 'history';
+  const isOverview = !isGuide && !isHistory;
+
+  overviewView.classList.toggle('hidden', !isOverview);
+  guideView.classList.toggle('visible', isGuide);
+  historyView.classList.toggle('visible', isHistory);
+  heroSection.classList.toggle('hidden', !isOverview);
+  footerSection.classList.toggle('hidden', !isOverview);
+  mainView.classList.toggle('sub-view', !isOverview);
+
+  footerGuideBtn.textContent = (isGuide || isHistory) ? 'Back to features' : 'New user guide';
+  mainView.scrollTop = 0;
+
+  if (isHistory) {
+    void loadConversationHistory();
+  }
+}
+
+function showStep(index) {
+  const step = steps[index] || steps[0];
+  guideKicker.textContent = `Step ${index + 1}`;
+  guideTitle.textContent = step.title;
+  guideText.textContent = step.text;
+  guideChecks.innerHTML = step.checks.map(iconCheck).join('');
+  stepButtons.forEach((button) => {
+    button.classList.toggle('active', Number(button.dataset.step) === index);
+  });
+}
+
+stepButtons.forEach((button) => {
+  button.addEventListener('click', () => showStep(Number(button.dataset.step)));
+});
+
+document.getElementById('guideBtn').addEventListener('click', () => {
+  showView('guide');
+  showStep(0);
+});
+document.getElementById('historyBtn').addEventListener('click', () => showView('history'));
+document.getElementById('historyFeatureCard').addEventListener('click', () => showView('history'));
+document.getElementById('historyFeatureCard').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    showView('history');
+  }
+});
+document.getElementById('backFromHistoryBtn').addEventListener('click', () => showView('overview'));
+document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+  if (!historySummaries.length) return;
+  if (!confirm('Clear all saved conversation history?')) return;
+  await window.ss.clearConversationHistory();
+  historySummaries = [];
+  selectedHistoryId = null;
+  renderHistoryList();
+});
+document.getElementById('deleteHistoryBtn').addEventListener('click', async () => {
+  if (!selectedHistoryId) return;
+  if (!confirm('Delete this saved session?')) return;
+  await window.ss.deleteConversationHistory(selectedHistoryId);
+  selectedHistoryId = null;
+  await loadConversationHistory();
+});
+footerGuideBtn.addEventListener('click', () => {
+  if (guideView.classList.contains('visible') || historyView.classList.contains('visible')) {
+    showView('overview');
+    return;
+  }
+  showView('guide');
+  showStep(0);
+});
+document.getElementById('backToFeaturesBtn').addEventListener('click', () => showView('overview'));
+
+document.getElementById('startBtn').addEventListener('click', () => window.ss.startFromWelcome());
+document.getElementById('footerStartBtn').addEventListener('click', () => window.ss.startFromWelcome());
+document.getElementById('settingsBtn').addEventListener('click', () => window.ss.openSettings());
+document.getElementById('closeBtn').addEventListener('click', () => window.ss.closeWindow());
+document.getElementById('minimizeBtn').addEventListener('click', () => window.ss.minimizeWindow());
+document.getElementById('maximizeBtn').addEventListener('click', () => window.ss.toggleMaximizeWindow());
+
+window.ss.on('window:maximized-state', (isMaximized) => {
+  const btn = document.getElementById('maximizeBtn');
+  btn.classList.toggle('restore', isMaximized);
+  btn.title = isMaximized ? 'Restore' : 'Maximize';
+  btn.setAttribute('aria-label', isMaximized ? 'Restore' : 'Maximize');
+});
+
+window.ss.on('history:updated', () => {
+  if (historyView.classList.contains('visible')) {
+    void loadConversationHistory();
+  }
+});
+
+void loadConversationHistory();
+</script>
+</body>
+</html>

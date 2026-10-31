@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ScreenSense Settings</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0c0c14;
+    --bg2: #13131f;
+    --bg3: #1a1a2a;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8e6f0;
+    --muted: rgba(232,230,240,0.45);
+    --accent: #7c6cfc;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    min-width: 520px;
+    min-height: 640px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  }
+  body.maximized {
+    border-radius: 0;
+    border-color: transparent;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 0 20px;
+    min-height: 46px;
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: drag;
+  }
+
+  .titlebar h1 {
+    font-size: 14px;
+    font-weight: 600;
+    -webkit-app-region: no-drag;
+  }
+
+  .window-btns {
+    display: flex;
+    align-self: stretch;
+    -webkit-app-region: no-drag;
+  }
+
+  .window-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    color: rgba(232,230,240,0.72);
+    cursor: pointer;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s;
+    -webkit-app-region: no-drag;
+  }
+  .window-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .window-btn.close:hover { background: #c42b1c; color: #fff; }
+
+  .content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .field .hint {
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .ollama-status {
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .ollama-status.ready { color: #50dc96; }
+  .ollama-status.missing { color: #ffaa32; }
+  .ollama-status.offline { color: #ff6464; }
+
+  input[type="text"], input[type="password"], select {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    padding: 9px 12px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    border-color: rgba(124,108,252,0.5);
+  }
+
+  input[type="password"] { font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+  .key-field {
+    position: relative;
+  }
+  .key-field input { padding-right: 70px; }
+  .show-key-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .show-key-btn:hover { color: var(--text); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .toggle-info { flex: 1; }
+  .toggle-info .t-label { font-size: 12px; font-weight: 500; }
+  .toggle-info .t-hint { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+    border: none;
+    outline: none;
+  }
+  .toggle::after {
+    content: '';
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { transform: translateX(16px); }
+  .toggle:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .save-bar {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-hover); }
+
+  .btn-accent {
+    background: rgba(124,108,252,0.15);
+    border-color: rgba(124,108,252,0.35);
+    color: var(--accent);
+  }
+  .btn-accent:hover { background: rgba(124,108,252,0.25); }
+
+  .status-msg {
+    font-size: 11px;
+    color: #32dc96;
+    align-self: center;
+    display: none;
+  }
+  .status-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="titlebar" ondblclick="window.ss.toggleMaximizeWindow()">
+  <h1>⚙ Settings</h1>
+  <div class="window-btns" ondblclick="event.stopPropagation()">
+    <button class="window-btn" onclick="window.ss.minimizeWindow()" title="Minimize">−</button>
+    <button class="window-btn" id="maximizeBtn" onclick="window.ss.toggleMaximizeWindow()" title="Maximize">□</button>
+    <button class="window-btn close" onclick="window.ss.closeWindow()" title="Close">×</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- API Keys -->
+  <div>
+    <div class="section-title">API Keys</div>
+
+    <div class="field">
+      <div class="hint">
+        Summarizer runs 100% locally via Ollama — no API key required.<br>
+        Live Captions can use local Whisper or your Groq/OpenAI API key, with API fallback if local Whisper fails.<br>
+        Scene Explainer uses a vision model to explain the selected screen or window.<br>
+        Face Analyzer and AI Fake Detector still use Ollama LLaVA or a BYOK vision API key.<br>
+        BYOK: paste your own provider API key or store free keys in `.env.local` on your server.<br>
+        Supported free providers include Groq, Google AI Studio, Mistral, and Together AI.<br>
+        Groq/OpenAI keys are used for API captions, chat, summaries, translation, and cleanup.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>OpenAI API Key <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <div class="hint">Optional. Use this for OpenAI-only features like AI video generation and fallback provider access. Separate multiple keys with commas or new lines.</div>
+      <div class="key-field">
+        <input type="password" id="openaiKey" placeholder="sk-..., sk-...">
+        <button class="show-key-btn" onclick="toggleShow('openaiKey', this)">SHOW</button>
+      </div>
+      <div class="ollama-status" id="ollamaStatus">Checking Ollama...</div>
+    </div>
+
+    <div class="field">
+      <label>Groq API Key <span style="color:var(--muted);font-weight:400">(BYOK — bring your own key)</span></label>
+      <div class="hint">Paste your own `gsk_...` key here to run scene analysis, summaries, and chat on Groq's free tier. Separate multiple keys with commas or new lines, or store them in `.env.local`.</div>
+      <div class="key-field">
+        <input type="password" id="groqKey" placeholder="gsk_..., gsk_...">
+        <button class="show-key-btn" onclick="toggleShow('groqKey', this)">SHOW</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Language -->
+  <div>
+    <div class="section-title">Language</div>
+
+    <div class="field">
+      <label>Input Language</label>
+      <div class="hint">Use Auto Detect for mixed-language speech. When output is English, keep Auto Detect on input and enable Auto-translate below. For one fixed language only, lock input language here for better accuracy.</div>
+      <select id="inputLang">
+        <option value="auto">Auto Detect</option>
+        <option value="te">Telugu</option>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="ta">Tamil</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="es">Spanish</option>
+        <option value="zh">Chinese (Simplified)</option>
+        <option value="ja">Japanese</option>
+        <option value="ko">Korean</option>
+        <option value="ar">Arabic</option>
+        <option value="pt">Portuguese</option>
+        <option value="ru">Russian</option>
+        <option value="it">Italian</option>
+        <option value="nl">Dutch</option>
+        <option value="pl">Polish</option>
+        <option value="tr">Turkish</option>
+        <option value="vi">Vietnamese</option>
+        <option value="th">Thai</option>
+        <option value="id">Indonesian</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Output Language</label>
+      <div class="hint">Choose Default to keep the original detected language, or pick a language to translate live captions into it.</div>
+      <select id="outputLang">
+        <option value="default">Default (Original language)</option>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="te">Telugu</option>
+        <option value="ta">Tamil</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="es">Spanish</option>
+        <option value="zh">Chinese (Simplified)</option>
+        <option value="ja">Japanese</option>
+        <option value="ko">Korean</option>
+        <option value="ar">Arabic</option>
+        <option value="pt">Portuguese</option>
+        <option value="ru">Russian</option>
+        <option value="it">Italian</option>
+        <option value="nl">Dutch</option>
+        <option value="pl">Polish</option>
+        <option value="tr">Turkish</option>
+        <option value="vi">Vietnamese</option>
+        <option value="th">Thai</option>
+        <option value="id">Indonesian</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div>
+    <div class="section-title">Features</div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="t-label">Show speaker & language</div>
+        <div class="t-hint">Display which speaker is speaking and their detected language per caption segment</div>
+      </div>
+      <button class="toggle" id="toggleDiarization" onclick="toggleSetting(this, 'speakerDiarization')"></button>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="t-label">Auto-translate Output</div>
+        <div class="t-hint">Translate from detected input language to your selected output language</div>
+      </div>
+      <button class="toggle on" id="toggleTranslate" onclick="toggleSetting(this, 'autoTranslate')"></button>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="t-label">Clean Up Captions</div>
+        <div class="t-hint">Fix spelling and punctuation while preserving the spoken words</div>
+      </div>
+      <button class="toggle on" id="toggleCaptionCleanup" onclick="toggleSetting(this, 'captionCleanup')"></button>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="t-label">Show Timestamps</div>
+        <div class="t-hint">Prepend [MM:SS] to all captions and scene explanations</div>
+      </div>
+      <button class="toggle on" id="toggleTimestamps" onclick="toggleSetting(this, 'showTimestamps')"></button>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="t-label">Screen Capture Protection</div>
+        <div class="t-hint">Hide app window from screenshots and screen sharing (makes app invisible/transparent)</div>
+      </div>
+      <button class="toggle on" id="toggleCaptureProtection" onclick="toggleSetting(this, 'screenCaptureProtection')"></button>
+    </div>
+  </div>
+
+  <!-- Scene settings -->
+  <div>
+    <div class="section-title">Scene Explainer</div>
+    <div class="field">
+      <label>Scene Capture Interval</label>
+      <div class="hint">How often to capture a new frame for scene explanation (lower = more frequent updates)</div>
+      <select id="sceneInterval">
+        <option value="5000">Every 5 seconds</option>
+        <option value="10000" selected>Every 10 seconds (recommended)</option>
+        <option value="15000">Every 15 seconds</option>
+        <option value="30000">Every 30 seconds (low API usage)</option>
+        <option value="60000">Every 60 seconds (minimal API usage)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Local Whisper -->
+  <div>
+    <div class="section-title">Local Whisper Settings</div>
+
+    <div class="field">
+      <label>Whisper Model</label>
+      <div class="hint">
+        Choose the model size. Larger models are more accurate but consume more memory and compute.<br>
+        <strong>Highly Recommended:</strong> <code>systran/faster-distil-whisper-large-v3</code> (large accuracy with small speed).
+      </div>
+      <select id="whisperModel">
+        <option value="tiny">tiny (Fastest, lowest accuracy)</option>
+        <option value="base">base</option>
+        <option value="small">small (Default)</option>
+        <option value="medium">medium</option>
+        <option value="large-v3">large-v3 (Most accurate, slow)</option>
+        <option value="systran/faster-distil-whisper-medium.en">distil-medium.en (English-only, fast & accurate)</option>
+        <option value="systran/faster-distil-whisper-large-v3">distil-large-v3 (Multilingual, very fast & accurate)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Compute Device</label>
+      <div class="hint">Select hardware device. Choose CUDA if you have a compatible NVIDIA GPU (requires cuBLAS and cuDNN installed).</div>
+      <select id="whisperDevice">
+        <option value="auto">Auto Detect</option>
+        <option value="cpu">CPU (Standard)</option>
+        <option value="cuda">CUDA (NVIDIA GPU)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Compute Type</label>
+      <div class="hint">Quantization level. <code>int8</code> is standard for CPU; <code>float16</code> or <code>int8_float16</code> is recommended for CUDA.</div>
+      <select id="whisperComputeType">
+        <option value="int8">int8 (Default CPU)</option>
+        <option value="int8_float16">int8_float16 (Optimized GPU)</option>
+        <option value="float16">float16 (GPU)</option>
+        <option value="float32">float32 (Uncompressed, slow)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Decoding Beam Size</label>
+      <div class="hint">Higher values increase precision but use more compute resources. 3 is recommended as balanced, 1 is greedy (fastest).</div>
+      <select id="whisperBeamSize">
+        <option value="1">1 (Greedy - Fastest)</option>
+        <option value="3" selected>3 (Balanced - Recommended)</option>
+        <option value="5">5 (Search - Most Precise)</option>
+      </select>
+    </div>
+  </div>
+
+</div>
+
+<div class="save-bar">
+  <span class="status-msg" id="savedMsg">✓ Saved</span>
+  <button class="btn btn-ghost" onclick="window.ss.closeWindow()">Cancel</button>
+  <button class="btn btn-accent" onclick="saveSettings()">Save Settings</button>
+</div>
+
+<script>
+async function init() {
+  const s = await window.ss.getAllSettings();
+  document.getElementById('openaiKey').value = s.openaiKey || '';
+  document.getElementById('groqKey').value = s.apiKey || '';
+  document.getElementById('inputLang').value = s.preferredLanguage || 'auto';
+  document.getElementById('outputLang').value = s.preferredOutputLanguage || 'default';
+  document.getElementById('sceneInterval').value = String(s.sceneInterval || 10000);
+  document.getElementById('whisperModel').value = s.whisperModel || 'tiny';
+  document.getElementById('whisperDevice').value = s.whisperDevice || 'auto';
+  document.getElementById('whisperComputeType').value = s.whisperComputeType || 'int8';
+  document.getElementById('whisperBeamSize').value = String(s.whisperBeamSize || '3');
+  setToggle('toggleDiarization', s.speakerDiarization === true);
+  setToggle('toggleTranslate', s.autoTranslate !== false);
+  setToggle('toggleCaptionCleanup', s.captionCleanup !== false);
+  setToggle('toggleTimestamps', s.showTimestamps !== false);
+  setToggle('toggleCaptureProtection', s.screenCaptureProtection !== false);
+  checkOllamaStatus();
+}
+
+async function checkOllamaStatus() {
+  const status = document.getElementById('ollamaStatus');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const response = await fetch('http://localhost:11434/api/tags', {
+      signal: controller.signal
+    });
+    const data = await response.json();
+    const models = Array.isArray(data.models) ? data.models : [];
+    const hasLlava = models.some((model) => {
+      const name = String(model.name || model.model || '');
+      return name === 'llava' || name.startsWith('llava:');
+    });
+    const hasSummary = models.some((model) => {
+      const name = String(model.name || model.model || '');
+      return name === 'llama3.2' || name.startsWith('llama3.2:');
+    });
+    if (hasLlava && hasSummary) {
+      status.textContent = 'LLaVA + llama3.2 ready (vision + Scene Explainer fallback)';
+    } else if (hasLlava) {
+      status.textContent = 'LLaVA ready (Face/Summarizer). Run: ollama pull llama3.2 for Scene fallback';
+    } else if (hasSummary) {
+      status.textContent = 'llama3.2 ready (Scene Explainer fallback). Run: ollama pull llava for vision modes';
+    } else {
+      status.textContent = 'Run: ollama pull llava && ollama pull llama3.2';
+    }
+    status.className = `ollama-status ${hasLlava || hasSummary ? 'ready' : 'missing'}`;
+  } catch (error) {
+    status.textContent = 'Ollama not running — run: ollama serve';
+    status.className = 'ollama-status offline';
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function setToggle(id, val) {
+  const el = document.getElementById(id);
+  el.classList.toggle('on', val);
+  el.dataset.value = val ? 'true' : 'false';
+}
+
+function toggleSetting(btn, key) {
+  const current = btn.dataset.value === 'true';
+  const next = !current;
+  btn.classList.toggle('on', next);
+  btn.dataset.value = next ? 'true' : 'false';
+}
+
+function toggleShow(id, btn) {
+  const el = document.getElementById(id);
+  const isPass = el.type === 'password';
+  el.type = isPass ? 'text' : 'password';
+  btn.textContent = isPass ? 'HIDE' : 'SHOW';
+}
+
+async function saveSettings() {
+  await window.ss.setSetting('openaiKey', document.getElementById('openaiKey').value.trim());
+  await window.ss.setSetting('apiKey', document.getElementById('groqKey').value.trim());
+  await window.ss.setSetting('preferredLanguage', document.getElementById('inputLang').value);
+  await window.ss.setSetting('preferredOutputLanguage', document.getElementById('outputLang').value);
+  await window.ss.setSetting('sceneInterval', parseInt(document.getElementById('sceneInterval').value));
+  await window.ss.setSetting('whisperModel', document.getElementById('whisperModel').value);
+  await window.ss.setSetting('whisperDevice', document.getElementById('whisperDevice').value);
+  await window.ss.setSetting('whisperComputeType', document.getElementById('whisperComputeType').value);
+  await window.ss.setSetting('whisperBeamSize', parseInt(document.getElementById('whisperBeamSize').value));
+  await window.ss.setSetting('speakerDiarization', document.getElementById('toggleDiarization').dataset.value === 'true');
+  await window.ss.setSetting('autoTranslate', document.getElementById('toggleTranslate').dataset.value === 'true');
+  await window.ss.setSetting('captionCleanup', document.getElementById('toggleCaptionCleanup').dataset.value === 'true');
+  await window.ss.setSetting('showTimestamps', document.getElementById('toggleTimestamps').dataset.value === 'true');
+  await window.ss.setSetting('screenCaptureProtection', document.getElementById('toggleCaptureProtection').dataset.value === 'true');
+
+  const msg = document.getElementById('savedMsg');
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 2000);
+}
+
+init();
+
+window.ss.on('window:maximized-state', (isMaximized) => {
+  document.body.classList.toggle('maximized', isMaximized);
+  const btn = document.getElementById('maximizeBtn');
+  if (!btn) return;
+  btn.textContent = isMaximized ? '❐' : '□';
+  btn.title = isMaximized ? 'Restore' : 'Maximize';
+});
+</script>
+</body>
+</html>
